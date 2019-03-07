@@ -44,6 +44,7 @@
       self._volume = 1;
       self._canPlayEvent = 'canplaythrough';
       self._navigator = (typeof window !== 'undefined' && window.navigator) ? window.navigator : null;
+      self._sinkId = null;
 
       // Public properties.
       self.masterGain = null;
@@ -807,6 +808,7 @@
         sound._start = start;
         sound._stop = stop;
         sound._loop = loop;
+        sound._sinkId = _sinkId;
       };
 
       // End the sound instantly if seek is at the end.
@@ -867,6 +869,17 @@
           node.muted = sound._muted || self._muted || Howler._muted || node.muted;
           node.volume = sound._volume * Howler.volume();
           node.playbackRate = sound._rate;
+
+          // Play out of the specified output device if one has been specified. Otherwise play from default output.
+          if (self._sinkId) {
+            if (node.setSinkId !== undefined) {
+              node.setSinkId(self._sinkId).catch((e) => {
+                console.error(`Failed to set sink id ${e}`);
+              });
+            } else {
+              console.warn("Setting the sinkId is not supported on your browser.");
+            }
+          }
 
           // Some browsers will throw an error if this is called without user interaction.
           try {
@@ -1099,7 +1112,7 @@
     /**
      * Mute/unmute a single sound or all sounds in this Howl group.
      * @param  {Boolean} muted Set to true to mute and false to unmute.
-     * @param  {Number} id    The sound ID to update (omit to mute/unmute all).
+     * @param  {Number} id     The sound ID to update (omit to mute/unmute all).
      * @return {Howl}
      */
     mute: function(muted, id) {
@@ -1148,6 +1161,55 @@
           }
 
           self._emit('mute', sound._id);
+        }
+      }
+
+      return self;
+    },
+
+    /**
+     * Set the device to play sound from.  Only works with html5.
+     * @param {string} deviceId  The deviceId to use as new sink for the output.
+     * @param {Number} id        The sound ID to update (omit to set the deviceId for all).
+     */
+    setDeviceId: function(deviceId, id) {
+      var self = this;
+      if (!self._html5) {
+        console.warn('setDeviceId is only supported on html5');
+        return self;
+      }
+      
+      // If applying to all sounds, update the group's value.
+      if (typeof id === 'undefined') {
+        if (typeof deviceId === 'string') {
+          self._sinkId = deviceId;
+        } else {
+          console.warn('invalid deviceId passed');
+          return self;
+        }
+      }
+
+      // If no id is passed, get all ID's to change.
+      var ids = self._getSoundIds(id);
+
+      for (var i=0; i<ids.length; i++) {
+        // Get the sound.
+        var sound = self._soundById(ids[i]);
+
+        if (sound) {
+          sound._sinkId = deviceId;
+
+          if (sound._node) {
+            if (sound._node.setSinkId !== undefined) {
+              sound._node.setSinkId(deviceId).catch((e) => {
+                console.error(`Failed to set sink id ${e}`);
+              });
+            } else {
+              console.warn("Setting the sinkId is not supported on your browser.");
+            }
+          } else {
+            console.warn('Not possible to call setSinkId');
+          }
         }
       }
 

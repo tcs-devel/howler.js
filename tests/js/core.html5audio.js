@@ -1,6 +1,56 @@
 // Cache the label for later use.
 var label = document.getElementById('label');
 var start = document.getElementById('start');
+var device = document.getElementById('device');
+
+// setup device selection
+function queryDevices() {
+  navigator.mediaDevices.enumerateDevices().then((deviceInfos) => this.gotDevices(deviceInfos)).catch((err) => this.handleErrorWhenGettingDevices(err));
+}
+
+function gotDevices(deviceInfos) {
+
+  var length = device.options.length;
+  for (i = 0; i < length; i++) {
+    select.options[i] = null;
+  }
+
+  var option = document.createElement("option");
+  option.value = "";
+  option.label = "Controlled by your browser";
+  device.add(option);
+
+  for (let dev of deviceInfos) {
+    let deviceText = dev.deviceId;
+    if (dev.kind === 'audiooutput') {
+        if (device.deviceId === 'default') {
+          deviceText = "Default Device";
+        } else if (dev.deviceId === 'communications') {
+          deviceText = "Default Communication Device";
+        } else {
+          deviceText = dev.label || `speaker ${dev.deviceId}`;
+        }
+    } else {
+        continue; // not supported device kind
+    }
+
+    var option = document.createElement("option");
+    option.value = dev.deviceId;
+    option.label = deviceText;
+    device.add(option);
+  }
+}
+
+function handleErrorWhenGettingDevices(err) {
+  console.error(`Failed to get audio devices: ${err}`);
+}
+
+queryDevices();
+
+device.onchange = function () {
+  sound1.setDeviceId(device.value);
+  sound2.setDeviceId(device.value);
+}
 
 // Setup the sounds to be used.
 var sound1 = new Howl({
