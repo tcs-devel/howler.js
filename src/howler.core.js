@@ -873,7 +873,7 @@
           // Play out of the specified output device if one has been specified. Otherwise play from default output.
           if (self._sinkId) {
             if (node.setSinkId !== undefined) {
-              node.setSinkId(self._sinkId).catch((e) => {
+              node.setSinkId(self._sinkId).catch(function(e) {
                 console.error(`Failed to set sink id ${e}`);
               });
             } else {
@@ -1201,7 +1201,7 @@
 
           if (sound._node) {
             if (sound._node.setSinkId !== undefined) {
-              sound._node.setSinkId(deviceId).catch((e) => {
+              sound._node.setSinkId(deviceId).catch(function(e) {
                 console.error(`Failed to set sink id ${e}`);
               });
             } else {
