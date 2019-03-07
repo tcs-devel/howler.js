@@ -808,7 +808,6 @@
         sound._start = start;
         sound._stop = stop;
         sound._loop = loop;
-        sound._sinkId = _sinkId;
       };
 
       // End the sound instantly if seek is at the end.
