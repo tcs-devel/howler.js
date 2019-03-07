@@ -874,7 +874,7 @@
           if (self._sinkId) {
             if (node.setSinkId !== undefined) {
               node.setSinkId(self._sinkId).catch(function(e) {
-                console.error(`Failed to set sink id ${e}`);
+                console.error("Failed to set sink id (" + e.name + ": " + e.message + ")");
               });
             } else {
               console.warn("Setting the sinkId is not supported on your browser.");
@@ -1202,7 +1202,7 @@
           if (sound._node) {
             if (sound._node.setSinkId !== undefined) {
               sound._node.setSinkId(deviceId).catch(function(e) {
-                console.error(`Failed to set sink id ${e}`);
+                console.error("Failed to set sink id (" + e.name + ": " + e.message + ")");
               });
             } else {
               console.warn("Setting the sinkId is not supported on your browser.");
