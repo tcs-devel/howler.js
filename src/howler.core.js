@@ -1170,11 +1170,24 @@
      * Set the device to play sound from.  Only works with html5.
      * @param {string} deviceId  The deviceId to use as new sink for the output.
      * @param {Number} id        The sound ID to update (omit to set the deviceId for all).
+     * @return {Howl}
      */
     setDeviceId: function(deviceId, id) {
       var self = this;
       if (!self._html5) {
         console.warn('setDeviceId is only supported on html5');
+        return self;
+      }
+
+      // If the sound hasn't loaded, add it to the load queue to setDeviceId() when capable.
+      if (self._state !== 'loaded' || self._playLock) {
+        self._queue.push({
+          event: 'setDeviceId',
+          action: function() {
+            self.setDeviceId(deviceId, id);
+          }
+        });
+
         return self;
       }
       
