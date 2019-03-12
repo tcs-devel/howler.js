@@ -873,7 +873,7 @@
           if (self._sinkId) {
             if (node.setSinkId !== undefined) {
               node.setSinkId(self._sinkId).catch(function(e) {
-                console.error("Failed to set sink id (" + e.name + ": " + e.message + ")");
+                console.error("Failed to set sink id '" + deviceId + "' (" + e.name + ": " + e.message + ")");
               });
             } else {
               console.warn("Setting the sinkId is not supported on your browser.");
@@ -1178,19 +1178,7 @@
         console.warn('setDeviceId is only supported on html5');
         return self;
       }
-
-      // If the sound hasn't loaded, add it to the load queue to setDeviceId() when capable.
-      if (self._state !== 'loaded' || self._playLock) {
-        self._queue.push({
-          event: 'setDeviceId',
-          action: function() {
-            self.setDeviceId(deviceId, id);
-          }
-        });
-
-        return self;
-      }
-      
+   
       // If applying to all sounds, update the group's value.
       if (typeof id === 'undefined') {
         if (typeof deviceId === 'string') {
@@ -1214,7 +1202,7 @@
           if (sound._node) {
             if (sound._node.setSinkId !== undefined) {
               sound._node.setSinkId(deviceId).catch(function(e) {
-                console.error("Failed to set sink id (" + e.name + ": " + e.message + ")");
+                console.error("Failed to set sink id '" + deviceId + "' (" + e.name + ": " + e.message + ")");
               });
             } else {
               console.warn("Setting the sinkId is not supported on your browser.");
