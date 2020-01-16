@@ -5,6 +5,8 @@
 
 Additional information, live demos and a user showcase are available at [howlerjs.com](https://howlerjs.com).
 
+Follow on Twitter for howler.js and development-related discussion: [@GoldFireStudios](https://twitter.com/goldfirestudios).
+
 ### Features
 * Single API for all audio needs
 * Defaults to Web Audio API and falls back to HTML5 Audio
@@ -287,12 +289,12 @@ Get/set whether to loop the sound or group. This method can optionally take 0, 1
 #### state()
 Check the load status of the `Howl`, returns a `unloaded`, `loading` or `loaded`.
 
-#### playing(id)
+#### playing([id])
 Check if a sound is currently playing or not, returns a `Boolean`. If no sound ID is passed, check if any sound in the `Howl` group is playing.
-* **id**: `Number` The sound ID to check.
+* **id**: `Number` `optional` The sound ID to check.
 
 #### duration([id])
-Get the duration of the audio source. Will return 0 until after the `load` event fires.
+Get the duration of the audio source (in seconds). Will return 0 until after the `load` event fires.
 * **id**: `Number` `optional` The sound ID to check. Passing an ID will return the duration of the sprite being played on this instance; otherwise, the full source duration is returned.
 
 #### on(event, function, [id])
@@ -478,6 +480,6 @@ ffmpeg -i sound1.wav -dash 1 sound1.webm
 
 ### License
 
-Copyright (c) 2013-2018 [James Simpson](https://twitter.com/GoldFireStudios) and [GoldFire Studios, Inc.](http://goldfirestudios.com)
+Copyright (c) 2013-2019 [James Simpson](https://twitter.com/GoldFireStudios) and [GoldFire Studios, Inc.](http://goldfirestudios.com)
 
 Released under the [MIT License](https://github.com/goldfire/howler.js/blob/master/LICENSE.md).

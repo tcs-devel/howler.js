@@ -1,8 +1,8 @@
 /*!
- *  howler.js v2.1.1
+ *  howler.js v2.1.3
  *  howlerjs.com
  *
- *  (c) 2013-2018, James Simpson of GoldFire Studios
+ *  (c) 2013-2019, James Simpson of GoldFire Studios
  *  goldfirestudios.com
  *
  *  MIT License
@@ -283,9 +283,8 @@
     _unlockAudio: function() {
       var self = this || Howler;
 
-      // Only run this on certain browsers/devices.
-      var shouldUnlock = /iPhone|iPad|iPod|Android|BlackBerry|BB10|Silk|Mobi|Chrome|Safari/i.test(self._navigator && self._navigator.userAgent);
-      if (self._audioUnlocked || !self.ctx || !shouldUnlock) {
+      // Only run this if Web Audio is supported and it hasn't already been unlocked.
+      if (self._audioUnlocked || !self.ctx) {
         return;
       }
 
@@ -315,14 +314,18 @@
         // This must occur before WebAudio setup or the source.onended
         // event will not fire.
         for (var i=0; i<self.html5PoolSize; i++) {
-          var audioNode = new Audio();
+          try {
+            var audioNode = new Audio();
 
-          // Mark this Audio object as unlocked to ensure it can get returned
-          // to the unlocked pool when released.
-          audioNode._unlocked = true;
+            // Mark this Audio object as unlocked to ensure it can get returned
+            // to the unlocked pool when released.
+            audioNode._unlocked = true;
 
-          // Add the audio node to the pool.
-          self._releaseHtml5Audio(audioNode);
+            // Add the audio node to the pool.
+            self._releaseHtml5Audio(audioNode);
+          } catch (e) {
+            self.noAudio = true;
+          }
         }
 
         // Loop through any assigned audio nodes and unlock them.
@@ -794,7 +797,6 @@
       var timeout = (duration * 1000) / Math.abs(sound._rate);
       var start = self._sprite[sprite][0] / 1000;
       var stop = (self._sprite[sprite][0] + self._sprite[sprite][1]) / 1000;
-      var loop = !!(sound._loop || self._sprite[sprite][2]);
       sound._sprite = sprite;
 
       // Mark the sound as ended instantly so that this async playback
@@ -807,7 +809,7 @@
         sound._seek = seek;
         sound._start = start;
         sound._stop = stop;
-        sound._loop = loop;
+        sound._loop = !!(sound._loop || self._sprite[sprite][2]);
       };
 
       // End the sound instantly if seek is at the end.
@@ -945,6 +947,12 @@
             self._emit('playerror', sound._id, err);
           }
         };
+
+        // If this is streaming audio, make sure the src is set and load again.
+        if (node.src === 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA') {
+          node.src = self._src;
+          node.load();
+        }
 
         // Play immediately if ready, or wait for the 'canplaythrough'e vent.
         var loadedNoReadyState = (window && window.ejecta) || (!node.readyState && Howler._navigator.isCocoonJS);
@@ -1096,6 +1104,11 @@
             } else if (!isNaN(sound._node.duration) || sound._node.duration === Infinity) {
               sound._node.currentTime = sound._start || 0;
               sound._node.pause();
+
+              // If this is a live stream, stop download once the audio is stopped.
+              if (sound._node.duration === Infinity) {
+                self._clearSound(sound._node);
+              }
             }
           }
 
@@ -1299,7 +1312,7 @@
     },
 
     /**
-     * Fade a currently playing sound between two volumes (if no id is passsed, all sounds will fade).
+     * Fade a currently playing sound between two volumes (if no id is passed, all sounds will fade).
      * @param  {Number} from The value to fade from (0.0 to 1.0).
      * @param  {Number} to   The volume to fade to (0.0 to 1.0).
      * @param  {Number} len  Time in milliseconds to fade.
@@ -1761,10 +1774,7 @@
         // Remove the source or disconnect.
         if (!self._webAudio) {
           // Set the source to 0-second silence to stop any downloading (except in IE).
-          var checkIE = /MSIE |Trident\//.test(Howler._navigator && Howler._navigator.userAgent);
-          if (!checkIE) {
-            sounds[i]._node.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-          }
+          self._clearSound(sounds[i]._node);
 
           // Remove any event listeners.
           sounds[i]._node.removeEventListener('error', sounds[i]._errorFn, false);
@@ -2182,6 +2192,17 @@
       node.bufferSource = null;
 
       return self;
+    },
+
+    /**
+     * Set the source to a 0-second silence to stop any downloading (except in IE).
+     * @param  {Object} node Audio node to clear.
+     */
+    _clearSound: function(node) {
+      var checkIE = /MSIE |Trident\//.test(Howler._navigator && Howler._navigator.userAgent);
+      if (!checkIE) {
+        node.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      }
     }
   };
 
@@ -2242,7 +2263,7 @@
         self._node.gain.setValueAtTime(volume, Howler.ctx.currentTime);
         self._node.paused = true;
         self._node.connect(Howler.masterGain);
-      } else {
+      } else if (!Howler.noAudio) {
         // Get an unlocked Audio object from the pool.
         self._node = Howler._obtainHtml5Audio();
 
@@ -2499,7 +2520,7 @@
     // Create and expose the master GainNode when using Web Audio (useful for plugins or advanced usage).
     if (Howler.usingWebAudio) {
       Howler.masterGain = (typeof Howler.ctx.createGain === 'undefined') ? Howler.ctx.createGainNode() : Howler.ctx.createGain();
-      Howler.masterGain.gain.setValueAtTime(Howler._muted ? 0 : 1, Howler.ctx.currentTime);
+      Howler.masterGain.gain.setValueAtTime(Howler._muted ? 0 : Howler._volume, Howler.ctx.currentTime);
       Howler.masterGain.connect(Howler.ctx.destination);
     }
 
@@ -2541,10 +2562,10 @@
 /*!
  *  Spatial Plugin - Adds support for stereo and 3D audio where Web Audio is supported.
  *  
- *  howler.js v2.1.1
+ *  howler.js v2.1.3
  *  howlerjs.com
  *
- *  (c) 2013-2018, James Simpson of GoldFire Studios
+ *  (c) 2013-2019, James Simpson of GoldFire Studios
  *  goldfirestudios.com
  *
  *  MIT License
@@ -2657,9 +2678,9 @@
         self.ctx.listener.forwardX.setTargetAtTime(x, Howler.ctx.currentTime, 0.1);
         self.ctx.listener.forwardY.setTargetAtTime(y, Howler.ctx.currentTime, 0.1);
         self.ctx.listener.forwardZ.setTargetAtTime(z, Howler.ctx.currentTime, 0.1);
-        self.ctx.listener.upX.setTargetAtTime(x, Howler.ctx.currentTime, 0.1);
-        self.ctx.listener.upY.setTargetAtTime(y, Howler.ctx.currentTime, 0.1);
-        self.ctx.listener.upZ.setTargetAtTime(z, Howler.ctx.currentTime, 0.1);
+        self.ctx.listener.upX.setTargetAtTime(xUp, Howler.ctx.currentTime, 0.1);
+        self.ctx.listener.upY.setTargetAtTime(yUp, Howler.ctx.currentTime, 0.1);
+        self.ctx.listener.upZ.setTargetAtTime(zUp, Howler.ctx.currentTime, 0.1);
       } else {
         self.ctx.listener.setOrientation(x, y, z, xUp, yUp, zUp);
       }

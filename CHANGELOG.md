@@ -1,3 +1,14 @@
+## 2.1.3 (December 24, 2019)
+- `FIXED` Don't try to obtain HTML5 audio if there is no audio support ([#1191](https://github.com/goldfire/howler.js/issues/1191)).
+- `FIXED` The x/y/z orientations for the top of the listener weren't being set properly ([#1221](https://github.com/goldfire/howler.js/pull/1221)).
+- `FIXED` Race condition that could prevent looping audio from always looping ([#1225](https://github.com/goldfire/howler.js/pull/1225)).
+- `FIXED` Race condition that could cause the main volume to be reset to 1 if called before `unlockAudio` ([#1210](https://github.com/goldfire/howler.js/pull/1210)).
+
+## 2.1.2 (April 19, 2019)
+- `FIXED` Removed browser check for auto play unlock since all major browsers now implement this.
+- `FIXED` Live streams now stop downloading when they are stopped, also fixing issue in Chrome with stopping twice ([#1129](https://github.com/goldfire/howler.js/issues/1129)).
+- `FIXED` Prevent error in Edge when `Audio` isn't supported ([#1147](https://github.com/goldfire/howler.js/issues/1147)).
+
 ## 2.1.1 (December 21, 2018)
 - `FIXED` Regression that broke simple play/pause usage in certain edge cases ([#1101](https://github.com/goldfire/howler.js/issues/1101)).
 - `FIXED` Loading and unloading multiple Howls with the same src could cause them all to unload ([#1103](https://github.com/goldfire/howler.js/issues/1103)).
