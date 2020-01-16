@@ -5,7 +5,7 @@
  *  (c) 2013-2019, James Simpson of GoldFire Studios
  *  goldfirestudios.com
  *
- *  MIT License
+:q *  MIT License
  */
 
 (function() {
